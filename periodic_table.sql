@@ -1,115 +1,238 @@
- 
--- 1. CLEAN UP BAD DATA
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.22 (Ubuntu 12.22-0ubuntu0.20.04.4)
+-- Dumped by pg_dump version 12.22 (Ubuntu 12.22-0ubuntu0.20.04.4)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+DROP DATABASE periodic_table;
+--
+-- Name: periodic_table; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE periodic_table WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C.UTF-8' LC_CTYPE = 'C.UTF-8';
 
 
-DELETE FROM properties WHERE atomic_number = 1000;
-DELETE FROM elements WHERE atomic_number = 1000;
+ALTER DATABASE periodic_table OWNER TO postgres;
 
- 
--- 2. FIX COLUMN NAMES
- 
+\connect periodic_table
 
-ALTER TABLE properties RENAME COLUMN weight TO atomic_mass;
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
 
-ALTER TABLE properties RENAME COLUMN melting_point TO melting_point_celsius;
+SET default_tablespace = '';
 
-ALTER TABLE properties RENAME COLUMN boiling_point TO boiling_point_celsius;
+SET default_table_access_method = heap;
 
- 
--- 3. CONSTRAINTS
- 
+--
+-- Name: elements; Type: TABLE; Schema: public; Owner: freecodecamp
+--
 
-ALTER TABLE properties
-ALTER COLUMN melting_point_celsius SET NOT NULL;
-
-ALTER TABLE properties
-ALTER COLUMN boiling_point_celsius SET NOT NULL;
-
-ALTER TABLE elements
-ADD CONSTRAINT unique_symbol UNIQUE (symbol);
-
-ALTER TABLE elements
-ADD CONSTRAINT unique_name UNIQUE (name);
-
-ALTER TABLE elements
-ALTER COLUMN symbol SET NOT NULL;
-
-ALTER TABLE elements
-ALTER COLUMN name SET NOT NULL;
-
- 
--- 4. FOREIGN KEY
- 
-
-ALTER TABLE properties
-ADD CONSTRAINT fk_atomic_number
-FOREIGN KEY (atomic_number)
-REFERENCES elements (atomic_number);
-
- 
--- 5. TYPES TABLE
- 
-
-CREATE TABLE types (
-    type_id SERIAL PRIMARY KEY,
-    type VARCHAR NOT NULL
+CREATE TABLE public.elements (
+    atomic_number integer NOT NULL,
+    symbol character varying(2) NOT NULL,
+    name character varying(40) NOT NULL
 );
 
-INSERT INTO types (type)
-VALUES ('metal'), ('nonmetal'), ('metalloid');
 
- 
--- 6. LINK TYPE TO PROPERTIES
- 
+ALTER TABLE public.elements OWNER TO freecodecamp;
 
-ALTER TABLE properties ADD COLUMN type_id INT;
+--
+-- Name: properties; Type: TABLE; Schema: public; Owner: freecodecamp
+--
 
-UPDATE properties
-SET type_id = types.type_id
-FROM types
-WHERE properties.type = types.type;
+CREATE TABLE public.properties (
+    atomic_number integer NOT NULL,
+    atomic_mass numeric NOT NULL,
+    melting_point_celsius numeric NOT NULL,
+    boiling_point_celsius numeric NOT NULL,
+    type_id integer NOT NULL
+);
 
-ALTER TABLE properties
-ALTER COLUMN type_id SET NOT NULL;
 
-ALTER TABLE properties
-ADD CONSTRAINT fk_type
-FOREIGN KEY (type_id)
-REFERENCES types (type_id);
+ALTER TABLE public.properties OWNER TO freecodecamp;
 
--- remove old type column
-ALTER TABLE properties DROP COLUMN type;
+--
+-- Name: types; Type: TABLE; Schema: public; Owner: freecodecamp
+--
 
- 
--- 7. CLEAN SYMBOL CASE
- 
+CREATE TABLE public.types (
+    type_id integer NOT NULL,
+    type character varying NOT NULL
+);
 
-UPDATE elements
-SET symbol = UPPER(LEFT(symbol, 1)) || LOWER(SUBSTRING(symbol FROM 2));
 
- 
--- 8. FIX ATOMIC MASS TYPE
- 
+ALTER TABLE public.types OWNER TO freecodecamp;
 
-ALTER TABLE properties
-ALTER COLUMN atomic_mass TYPE NUMERIC;
+--
+-- Name: types_type_id_seq; Type: SEQUENCE; Schema: public; Owner: freecodecamp
+--
 
- 
--- 9. ADD MISSING ELEMENTS
- 
+CREATE SEQUENCE public.types_type_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
-INSERT INTO elements (atomic_number, name, symbol)
-VALUES
-(9, 'Fluorine', 'F'),
-(10, 'Neon', 'Ne');
 
-INSERT INTO properties (
-    atomic_number,
-    atomic_mass,
-    melting_point_celsius,
-    boiling_point_celsius,
-    type_id
-)
-VALUES
-(9, 18.998, -220, -188.1, (SELECT type_id FROM types WHERE type='nonmetal')),
-(10, 20.18, -248.6, -246.1, (SELECT type_id FROM types WHERE type='nonmetal'));
+ALTER TABLE public.types_type_id_seq OWNER TO freecodecamp;
+
+--
+-- Name: types_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: freecodecamp
+--
+
+ALTER SEQUENCE public.types_type_id_seq OWNED BY public.types.type_id;
+
+
+--
+-- Name: types type_id; Type: DEFAULT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.types ALTER COLUMN type_id SET DEFAULT nextval('public.types_type_id_seq'::regclass);
+
+
+--
+-- Data for Name: elements; Type: TABLE DATA; Schema: public; Owner: freecodecamp
+--
+
+INSERT INTO public.elements VALUES (1, 'H', 'Hydrogen');
+INSERT INTO public.elements VALUES (2, 'He', 'Helium');
+INSERT INTO public.elements VALUES (3, 'Li', 'Lithium');
+INSERT INTO public.elements VALUES (4, 'Be', 'Beryllium');
+INSERT INTO public.elements VALUES (5, 'B', 'Boron');
+INSERT INTO public.elements VALUES (6, 'C', 'Carbon');
+INSERT INTO public.elements VALUES (7, 'N', 'Nitrogen');
+INSERT INTO public.elements VALUES (8, 'O', 'Oxygen');
+INSERT INTO public.elements VALUES (9, 'F', 'Fluorine');
+INSERT INTO public.elements VALUES (10, 'Ne', 'Neon');
+
+
+--
+-- Data for Name: properties; Type: TABLE DATA; Schema: public; Owner: freecodecamp
+--
+
+INSERT INTO public.properties VALUES (4, 9.0122, 1287, 2470, 1);
+INSERT INTO public.properties VALUES (3, 6.94, 180.54, 1342, 1);
+INSERT INTO public.properties VALUES (5, 10.81, 2075, 4000, 2);
+INSERT INTO public.properties VALUES (8, 15.999, -218, -183, 3);
+INSERT INTO public.properties VALUES (7, 14.007, -210.1, -195.8, 3);
+INSERT INTO public.properties VALUES (6, 12.011, 3550, 4027, 3);
+INSERT INTO public.properties VALUES (2, 4.0026, -272.2, -269, 3);
+INSERT INTO public.properties VALUES (1, 1.008, -259.1, -252.9, 3);
+INSERT INTO public.properties VALUES (9, 18.998, -220, -188.1, 3);
+INSERT INTO public.properties VALUES (10, 20.18, -248.6, -246.1, 3);
+
+
+--
+-- Data for Name: types; Type: TABLE DATA; Schema: public; Owner: freecodecamp
+--
+
+INSERT INTO public.types VALUES (1, 'metal');
+INSERT INTO public.types VALUES (2, 'metalloid');
+INSERT INTO public.types VALUES (3, 'nonmetal');
+
+
+--
+-- Name: types_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: freecodecamp
+--
+
+SELECT pg_catalog.setval('public.types_type_id_seq', 3, true);
+
+
+--
+-- Name: elements elements_atomic_number_key; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.elements
+    ADD CONSTRAINT elements_atomic_number_key UNIQUE (atomic_number);
+
+
+--
+-- Name: elements elements_pkey; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.elements
+    ADD CONSTRAINT elements_pkey PRIMARY KEY (atomic_number);
+
+
+--
+-- Name: properties properties_atomic_number_key; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.properties
+    ADD CONSTRAINT properties_atomic_number_key UNIQUE (atomic_number);
+
+
+--
+-- Name: properties properties_pkey; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.properties
+    ADD CONSTRAINT properties_pkey PRIMARY KEY (atomic_number);
+
+
+--
+-- Name: types types_pkey; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.types
+    ADD CONSTRAINT types_pkey PRIMARY KEY (type_id);
+
+
+--
+-- Name: elements unique_name; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.elements
+    ADD CONSTRAINT unique_name UNIQUE (name);
+
+
+--
+-- Name: elements unique_symbol; Type: CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.elements
+    ADD CONSTRAINT unique_symbol UNIQUE (symbol);
+
+
+--
+-- Name: properties fk_atomic_number; Type: FK CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.properties
+    ADD CONSTRAINT fk_atomic_number FOREIGN KEY (atomic_number) REFERENCES public.elements(atomic_number);
+
+
+--
+-- Name: properties fk_type_id; Type: FK CONSTRAINT; Schema: public; Owner: freecodecamp
+--
+
+ALTER TABLE ONLY public.properties
+    ADD CONSTRAINT fk_type_id FOREIGN KEY (type_id) REFERENCES public.types(type_id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
